@@ -31,8 +31,12 @@
 
 # List of contextualization parameters
 ONE_SERVICE_PARAMS=(
+<<<<<<< HEAD
     'ONEAPP_BACKEND'    'configure'  'Lithops compute backend'      ''
     'ONEAPP_STORAGE'    'configure'  'Lithops storage backend'      ''
+=======
+
+>>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
 )
 
 
@@ -53,13 +57,20 @@ EOF
 
 ### Contextualization defaults #######################################
 
+<<<<<<< HEAD
 ONEAPP_BACKEND="${ONEAPP_BACKEND:-localhost}"
 ONEAPP_STORAGE="${ONEAPP_STORAGE:-localhost}"
+=======
+>>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
 
 ### Globals ##########################################################
 
 DEP_PKGS="python3-pip"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -103,8 +114,11 @@ service_configure()
 
 service_bootstrap()
 {
+<<<<<<< HEAD
     # create Lithops config file in /etc/lithops
     create_lithops_config
+=======
+>>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
     return 0
 }
 
@@ -139,6 +153,7 @@ install_lithops()
     return $?
 }
 
+<<<<<<< HEAD
 create_lithops_config()
 {
     msg info "Create /etc/lithops folder"
@@ -152,6 +167,8 @@ lithops:
 EOF
 }
 
+=======
+>>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
 postinstall_cleanup()
 {
     msg info "Delete cache and stored packages"
