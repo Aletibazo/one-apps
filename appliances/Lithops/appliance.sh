@@ -31,7 +31,8 @@
 
 # List of contextualization parameters
 ONE_SERVICE_PARAMS=(
-
+    'ONEAPP_BACKEND'    'configure'  'Lithops compute backend'      ''
+    'ONEAPP_STORAGE'    'configure'  'Lithops storage backend'      ''
 )
 
 
@@ -52,11 +53,12 @@ EOF
 
 ### Contextualization defaults #######################################
 
+ONEAPP_BACKEND="${ONEAPP_BACKEND:-localhost}"
+ONEAPP_STORAGE="${ONEAPP_STORAGE:-localhost}"
 
 ### Globals ##########################################################
 
 DEP_PKGS="python3-pip"
-
 
 ###############################################################################
 ###############################################################################
@@ -101,6 +103,8 @@ service_configure()
 
 service_bootstrap()
 {
+    # create Lithops config file in /etc/lithops
+    create_lithops_config
     return 0
 }
 
@@ -133,6 +137,19 @@ install_lithops()
     fi
 
     return $?
+}
+
+create_lithops_config()
+{
+    msg info "Create /etc/lithops folder"
+    mkdir /etc/lithops
+
+    msg info "Create config file"
+    cat > /etc/lithops/config <<EOF
+lithops:
+  backend: ${ONEAPP_BACKEND}
+  storage: ${ONEAPP_STORAGE}
+EOF
 }
 
 postinstall_cleanup()
