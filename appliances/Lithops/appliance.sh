@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- #
-# Copyright 2018-2024, OpenNebula Project, OpenNebula Systems                  #
+# Copyright 2024, OpenNebula Project, OpenNebula Systems                  #
 #                                                                              #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may      #
 # not use this file except in compliance with the License. You may obtain      #
@@ -31,12 +31,12 @@
 
 # List of contextualization parameters
 ONE_SERVICE_PARAMS=(
-<<<<<<< HEAD
-    'ONEAPP_BACKEND'    'configure'  'Lithops compute backend'      ''
-    'ONEAPP_STORAGE'    'configure'  'Lithops storage backend'      ''
-=======
-
->>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
+    'ONEAPP_BACKEND'                    'configure'  'Lithops compute backend'                                          ''
+    'ONEAPP_STORAGE'                    'configure'  'Lithops storage backend'                                          ''
+    'ONEAPP_MINIO_ENDPOINT'             'configure'  'Lithops storage backend MinIO endpoint URL'                       ''
+    'ONEAPP_MINIO_ACCESS_KEY_ID'        'configure'  'Lithops storage backend MinIO account user access key'            ''
+    'ONEAPP_MINIO_SECRET_ACCESS_KEY'    'configure'  'Lithops storage backend MinIO account user secret access key'     ''
+    'ONEAPP_MINIO_BUCKETT'              'configure'  'Lithops storage backend MinIO existing bucket'                    ''
 )
 
 
@@ -48,29 +48,29 @@ ONE_SERVICE_VERSION='3.3.0'   #latest
 ONE_SERVICE_BUILD=$(date +%s)
 ONE_SERVICE_SHORT_DESCRIPTION='Appliance with preinstalled Lithops for KVM hosts'
 ONE_SERVICE_DESCRIPTION=$(cat <<EOF
-Appliance with preinstalled Lithops. 
+Appliance with preinstalled latest version of Lithops. 
 
-TODO Add complete documentation
+By default, it uses localhost both for Compute and Storage Backend.
+
+To configure MinIO as Storage Backend use the parameter ONEAPP_STORAGE:minio in conjunction 
+with ONEAPP_MINIO_ENDPOINT, ONEAPP_MINIO_ACCESS_KEY_ID and ONEAPP_MINIO_SECRET_ACCESS_KEY. 
+These parameters values have to point to a valid and reachable MinIO server endpoint.
+The parameter ONEAPP_MINIO_BUCKETT is optional, and it points to an existing bucket in the MinIO
+server. If the bucket does not exist or if the parameter is empty, the MinIO server will
+generate a bucket automatically.
 EOF
 )
-
+ONE_SERVICE_RECONFIGURABLE=true
 
 ### Contextualization defaults #######################################
 
-<<<<<<< HEAD
 ONEAPP_BACKEND="${ONEAPP_BACKEND:-localhost}"
 ONEAPP_STORAGE="${ONEAPP_STORAGE:-localhost}"
-=======
->>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
 
 ### Globals ##########################################################
 
 DEP_PKGS="python3-pip"
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -94,7 +94,7 @@ service_install()
     install_pkgs ${DEP_PKGS}
 
     # wordpress
-    install_lithops "${ONE_SERVICE_VERSION}"
+    install_lithops
 
     # service metadata
     create_one_service_metadata
@@ -109,16 +109,16 @@ service_install()
 
 service_configure()
 {
+    # create Lithops config file in /etc/lithops
+    create_lithops_config
+    # update Lithops config file if non-default options are set
+    update_lithops_config
     return 0
 }
 
 service_bootstrap()
 {
-<<<<<<< HEAD
-    # create Lithops config file in /etc/lithops
-    create_lithops_config
-=======
->>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
+    update_lithops_config
     return 0
 }
 
@@ -150,25 +150,58 @@ install_lithops()
         exit 1
     fi
 
-    return $?
-}
-
-<<<<<<< HEAD
-create_lithops_config()
-{
     msg info "Create /etc/lithops folder"
     mkdir /etc/lithops
 
-    msg info "Create config file"
+    return $?
+}
+
+create_lithops_config()
+{
+    msg info "Create default config file"
     cat > /etc/lithops/config <<EOF
 lithops:
-  backend: ${ONEAPP_BACKEND}
-  storage: ${ONEAPP_STORAGE}
+  backend: localhost
+  storage: localhost
+
+# Start Compute Backend configuration
+# End Compute Backend configuration
+
+# Start Storage Backend configuration
+# End Storage Backend configuration
 EOF
 }
 
-=======
->>>>>>> 86fdbff (F #-: Create new service for Lithops appliance)
+update_lithops_config(){
+    msg info "Update compute and storage backend modes"
+    sed -i "s/backend: .*/backend: ${ONEAPP_BACKEND}/g" /etc/lithops/config
+    sed -i "s/storage: .*/storage: ${ONEAPP_STORAGE}/g" /etc/lithops/config
+
+    if [ ${ONEAPP_STORAGE} = "localhost" ]; then
+        msg info "Edit config file for localhost Storage Backend"
+        sed -i -ne "/# Start Storage/ {p;" -e ":a; n; /# End Storage/ {p; b}; ba}; p" /etc/lithops/config
+    elif [ ${ONEAPP_STORAGE} = "minio" ]; then
+        msg info "Edit config file for MinIO Storage Backend"
+        if ! check_minio_attrs; then
+            echo
+            msg error "MinIO configuration failed"
+            msg info "You have to provide endpoint, access key id and secrec access key to configure MinIO storage backend"
+        else
+            msg info "Adding MinIO configuration to /etc/lithops/config"
+            sed -i -ne "/# Start Storage/ {p; iminio:\n  endpoint: ${ONEAPP_MINIO_ENDPOINT}\n  access_key_id: ${ONEAPP_MINIO_ACCESS_KEY_ID}\n  secret_access_key: ${ONEAPP_MINIO_SECRET_ACCESS_KEY}\n  storage_bucket: ${ONEAPP_MINIO_BUCKETT}" -e ":a; n; /# End Storage/ {p; b}; ba}; p" /etc/lithops/config
+        fi
+    fi
+}
+
+check_minio_attrs()
+{
+    [ -z "$ONEAPP_MINIO_ENDPOINT" ] && return 1
+    [ -z "$ONEAPP_MINIO_ACCESS_KEY_ID" ] && return 1
+    [ -z "$ONEAPP_MINIO_SECRET_ACCESS_KEY" ] && return 1
+
+    return 0
+}
+
 postinstall_cleanup()
 {
     msg info "Delete cache and stored packages"
