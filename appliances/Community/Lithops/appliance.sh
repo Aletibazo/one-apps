@@ -31,7 +31,6 @@
 
 # List of contextualization parameters
 ONE_SERVICE_PARAMS=(
-<<<<<<< HEAD
     'ONEAPP_BACKEND'                    'configure'  'Lithops compute backend'                                          'O|text'
     'ONEAPP_STORAGE'                    'configure'  'Lithops storage backend'                                          'O|text'
     'ONEAPP_MINIO_ENDPOINT'             'configure'  'Lithops storage backend MinIO endpoint URL'                       'O|text'
@@ -39,14 +38,6 @@ ONE_SERVICE_PARAMS=(
     'ONEAPP_MINIO_SECRET_ACCESS_KEY'    'configure'  'Lithops storage backend MinIO account user secret access key'     'O|text'
     'ONEAPP_MINIO_BUCKETT'              'configure'  'Lithops storage backend MinIO existing bucket'                    'O|text'
     'ONEAPP_MINIO_ENDPOINT_CERT'        'configure'  'Lithops storage backend MinIO endpoint certificate'               'O|text64'
-=======
-    'ONEAPP_BACKEND'                    'configure'  'Lithops compute backend'                                          ''
-    'ONEAPP_STORAGE'                    'configure'  'Lithops storage backend'                                          ''
-    'ONEAPP_MINIO_ENDPOINT'             'configure'  'Lithops storage backend MinIO endpoint URL'                       ''
-    'ONEAPP_MINIO_ACCESS_KEY_ID'        'configure'  'Lithops storage backend MinIO account user access key'            ''
-    'ONEAPP_MINIO_SECRET_ACCESS_KEY'    'configure'  'Lithops storage backend MinIO account user secret access key'     ''
-    'ONEAPP_MINIO_BUCKETT'              'configure'  'Lithops storage backend MinIO existing bucket'                    ''
->>>>>>> e6c9a98 (F OpenNebula/support#74-: Lithops appliance)
 )
 
 
@@ -102,7 +93,6 @@ service_install()
     # ensuring that the setup directory exists
     #TODO: move to service
     mkdir -p "$ONE_SERVICE_SETUP_DIR"
-<<<<<<< HEAD
     export DEBIAN_FRONTEND=noninteractive
 
     # packages
@@ -117,15 +107,6 @@ service_install()
     # create Lithops config file in /etc/lithops
     create_lithops_config
 
-=======
-
-    # packages
-    install_pkgs ${DEP_PKGS}
-
-    # wordpress
-    install_lithops
-
->>>>>>> e6c9a98 (F OpenNebula/support#74-: Lithops appliance)
     # service metadata
     create_one_service_metadata
 
@@ -139,7 +120,6 @@ service_install()
 
 service_configure()
 {
-<<<<<<< HEAD
     # update Lithops config file if non-default options are set
     update_lithops_config
 
@@ -157,12 +137,6 @@ service_configure()
         update-ca-certificates
     fi
 
-=======
-    # create Lithops config file in /etc/lithops
-    create_lithops_config
-    # update Lithops config file if non-default options are set
-    update_lithops_config
->>>>>>> e6c9a98 (F OpenNebula/support#74-: Lithops appliance)
     return 0
 }
 
@@ -180,16 +154,11 @@ service_bootstrap()
 # functions
 #
 
-<<<<<<< HEAD
 install_deps()
-=======
-install_pkgs()
->>>>>>> e6c9a98 (F OpenNebula/support#74-: Lithops appliance)
 {
     msg info "Run apt-get update"
     apt-get update
 
-<<<<<<< HEAD
     msg info "Install required packages for Lithops"
     if ! apt-get install -y "${1}" ; then
         msg error "Package(s) installation failed: ${1}"
@@ -220,23 +189,12 @@ install_docker()
 
     msg info "Install Docker Engine"
     apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io docker-buildx-plugin docker-compose-plugin
-=======
-    msg info "Install required packages"
-    if ! apt-get install -y "${@}" ; then
-        msg error "Package(s) installation failed"
-        exit 1
-    fi
->>>>>>> e6c9a98 (F OpenNebula/support#74-: Lithops appliance)
 }
 
 install_lithops()
 {
     msg info "Install Lithops from pip"
-<<<<<<< HEAD
     if ! pip install lithops==${LITHOPS_VERSION} ; then
-=======
-    if ! pip install lithops ; then
->>>>>>> e6c9a98 (F OpenNebula/support#74-: Lithops appliance)
         msg error "Error installing Lithops"
         exit 1
     fi
