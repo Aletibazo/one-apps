@@ -31,12 +31,13 @@
 
 # List of contextualization parameters
 ONE_SERVICE_PARAMS=(
-    'ONEAPP_BACKEND'                    'configure'  'Lithops compute backend'                                          ''
-    'ONEAPP_STORAGE'                    'configure'  'Lithops storage backend'                                          ''
-    'ONEAPP_MINIO_ENDPOINT'             'configure'  'Lithops storage backend MinIO endpoint URL'                       ''
-    'ONEAPP_MINIO_ACCESS_KEY_ID'        'configure'  'Lithops storage backend MinIO account user access key'            ''
-    'ONEAPP_MINIO_SECRET_ACCESS_KEY'    'configure'  'Lithops storage backend MinIO account user secret access key'     ''
-    'ONEAPP_MINIO_BUCKETT'              'configure'  'Lithops storage backend MinIO existing bucket'                    ''
+    'ONEAPP_BACKEND'                    'configure'  'Lithops compute backend'                                          'O|text'
+    'ONEAPP_STORAGE'                    'configure'  'Lithops storage backend'                                          'O|text'
+    'ONEAPP_MINIO_ENDPOINT'             'configure'  'Lithops storage backend MinIO endpoint URL'                       'O|text'
+    'ONEAPP_MINIO_ACCESS_KEY_ID'        'configure'  'Lithops storage backend MinIO account user access key'            'O|text'
+    'ONEAPP_MINIO_SECRET_ACCESS_KEY'    'configure'  'Lithops storage backend MinIO account user secret access key'     'O|text'
+    'ONEAPP_MINIO_BUCKETT'              'configure'  'Lithops storage backend MinIO existing bucket'                    'O|text'
+    'ONEAPP_MINIO_ENDPOINT_CERT'        'configure'  'Lithops storage backend MinIO endpoint certificate'               'O|text64'
 )
 
 
@@ -70,6 +71,7 @@ ONEAPP_STORAGE="${ONEAPP_STORAGE:-localhost}"
 ### Globals ##########################################################
 
 DEP_PKGS="python3-pip"
+LITHOPS_VERSION="3.3.0"
 
 ###############################################################################
 ###############################################################################
@@ -96,6 +98,9 @@ service_install()
     # wordpress
     install_lithops
 
+    # create Lithops config file in /etc/lithops
+    create_lithops_config
+
     # service metadata
     create_one_service_metadata
 
@@ -109,10 +114,23 @@ service_install()
 
 service_configure()
 {
-    # create Lithops config file in /etc/lithops
-    create_lithops_config
     # update Lithops config file if non-default options are set
     update_lithops_config
+
+    local_ca_folder="/usr/local/share/ca-certificates/minio"
+    if [[ ! -z "${ONE_APP_MINIO_ENDPOINT_CERT}" ]] && [[ ! -f "${local_ca_folder}/ca.crt" ]]; then
+        msg info "Adding trust CA for MinIO endpoint"
+
+        if [[ ! -d "${local_ca_folder}" ]]; then
+            msg info "Create folder ${local_ca_folder}"
+            mkdir "${local_ca_folder}"
+        fi
+
+        msg info "Create CA file and update certificates"
+        echo ${ONE_APP_MINIO_ENDPOINT_CERT} | base64 --decode >> ${local_ca_folder}/ca.crt
+        update-ca-certificates
+    fi
+
     return 0
 }
 
@@ -145,7 +163,7 @@ install_pkgs()
 install_lithops()
 {
     msg info "Install Lithops from pip"
-    if ! pip install lithops ; then
+    if ! pip install lithops==${LITHOPS_VERSION} ; then
         msg error "Error installing Lithops"
         exit 1
     fi
