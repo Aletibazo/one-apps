@@ -71,7 +71,9 @@ ONEAPP_STORAGE="${ONEAPP_STORAGE:-localhost}"
 ### Globals ##########################################################
 
 DEP_PKGS="python3-pip"
-LITHOPS_VERSION="3.3.0"
+DEP_PIP="boto3"
+LITHOPS_VERSION="3.4.0"
+DOCKER_VERSION="5:26.1.3-1~ubuntu.22.04~jammy"
 
 ###############################################################################
 ###############################################################################
@@ -91,11 +93,15 @@ service_install()
     # ensuring that the setup directory exists
     #TODO: move to service
     mkdir -p "$ONE_SERVICE_SETUP_DIR"
+    export DEBIAN_FRONTEND=noninteractive
 
     # packages
-    install_pkgs ${DEP_PKGS}
+    install_deps ${DEP_PKGS} ${DEP_PIP}
 
-    # wordpress
+    # docker
+    install_docker
+
+    # Lithops
     install_lithops
 
     # create Lithops config file in /etc/lithops
@@ -148,16 +154,41 @@ service_bootstrap()
 # functions
 #
 
-install_pkgs()
+install_deps()
 {
     msg info "Run apt-get update"
     apt-get update
 
-    msg info "Install required packages"
-    if ! apt-get install -y "${@}" ; then
-        msg error "Package(s) installation failed"
+    msg info "Install required packages for Lithops"
+    if ! apt-get install -y "${1}" ; then
+        msg error "Package(s) installation failed: ${1}"
         exit 1
     fi
+
+    msg info "Install pip dependencies"
+    if ! pip install "${2}" ; then
+        msg error "Python pip dependencies installation failed"
+        exit 1
+    fi
+}
+
+install_docker()
+{
+    msg info "Add Docker official GPG key"
+    install -m 0755 -d /etc/apt/keyrings
+
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+
+    chmod a+r /etc/apt/keyrings/docker.asc
+
+    msg info "Add Docker repository to apt sources"
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt update
+
+    msg info "Install Docker Engine"
+    apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io docker-buildx-plugin docker-compose-plugin
 }
 
 install_lithops()
