@@ -48,7 +48,8 @@ The parameter ONEAPP_MINIO_BUCKETT and ONEAPP_MINIO_ENDPOINT_CERT are optional.
 - ONEAPP_MINIO_BUCKET points to an existing bucket in the MinIO server. If the bucket does not exist or if the
 parameter is empty, the MinIO server will generate a bucket automatically.
 - ONEAPP_MINIO_ENDPOINT_CERT is necessary when using self-signed certificates on the MinIO server. This is the
-certificate for the CA on the MinIO server.
+certificate for the CA on the MinIO server. If the CA certificate exists, script will skip it,
+if one would want to update the CA certificate from context, first delete previous ca.crt file.
 EOF
 )
 ONE_SERVICE_RECONFIGURABLE=true
@@ -228,6 +229,7 @@ update_lithops_config(){
             echo
             msg error "MinIO configuration failed"
             msg info "You have to provide endpoint, access key id and secrec access key to configure MinIO storage backend"
+            exit 1
         else
             msg info "Adding MinIO configuration to /etc/lithops/config"
             sed -i -ne "/# Start Storage/ {p; iminio:\n  endpoint: ${ONEAPP_MINIO_ENDPOINT}\n  access_key_id: ${ONEAPP_MINIO_ACCESS_KEY_ID}\n  secret_access_key: ${ONEAPP_MINIO_SECRET_ACCESS_KEY}\n  storage_bucket: ${ONEAPP_MINIO_BUCKETT}" -e ":a; n; /# End Storage/ {p; b}; ba}; p" /etc/lithops/config
