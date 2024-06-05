@@ -13,20 +13,7 @@
 # See the License for the specific language governing permissions and          #
 # limitations under the License.                                               #
 # ---------------------------------------------------------------------------- #
-
-### Important notes ##################################################
-#
-# The contextualization variable 'ONEAPP_SITE_HOSTNAME' IS (!) mandatory and
-# must be correct (resolveable, reachable) otherwise the web will be broken.
-# It defaults to first non-loopback address it finds - if no address is found
-# then the 'localhost' is used - and then wordpress will function correctly
-# only from within the instance.
-#
-# 'ONEAPP_SITE_HOSTNAME' can be changed in the wordpress settings but it should
-# be set to something sensible from the beginning so you can be able to login
-# to the wordpress and change the settings...
-#
-### Important notes ##################################################
+set -o errexit -o pipefail
 
 
 # List of contextualization parameters
@@ -45,20 +32,23 @@ ONE_SERVICE_PARAMS=(
 
 # Appliance metadata
 ONE_SERVICE_NAME='Service Lithops - KVM'
-ONE_SERVICE_VERSION='3.3.0'   #latest
+ONE_SERVICE_VERSION='3.4.0'   #latest
 ONE_SERVICE_BUILD=$(date +%s)
 ONE_SERVICE_SHORT_DESCRIPTION='Appliance with preinstalled Lithops for KVM hosts'
 ONE_SERVICE_DESCRIPTION=$(cat <<EOF
-Appliance with preinstalled latest version of Lithops.
+Appliance with preinstalled Lithops v3.4.0.
 
 By default, it uses localhost both for Compute and Storage Backend.
 
-To configure MinIO as Storage Backend use the parameter ONEAPP_STORAGE:minio in conjunction
+To configure MinIO as Storage Backend use the parameter ONEAPP_STORAGE=minio
 with ONEAPP_MINIO_ENDPOINT, ONEAPP_MINIO_ACCESS_KEY_ID and ONEAPP_MINIO_SECRET_ACCESS_KEY.
 These parameters values have to point to a valid and reachable MinIO server endpoint.
-The parameter ONEAPP_MINIO_BUCKETT is optional, and it points to an existing bucket in the MinIO
-server. If the bucket does not exist or if the parameter is empty, the MinIO server will
-generate a bucket automatically.
+
+The parameter ONEAPP_MINIO_BUCKETT and ONEAPP_MINIO_ENDPOINT_CERT are optional.
+- ONEAPP_MINIO_BUCKET points to an existing bucket in the MinIO server. If the bucket does not exist or if the
+parameter is empty, the MinIO server will generate a bucket automatically.
+- ONEAPP_MINIO_ENDPOINT_CERT is necessary when using self-signed certificates on the MinIO server. This is the
+certificate for the CA on the MinIO server.
 EOF
 )
 ONE_SERVICE_RECONFIGURABLE=true
@@ -188,7 +178,10 @@ install_docker()
     apt update
 
     msg info "Install Docker Engine"
-    apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io docker-buildx-plugin docker-compose-plugin
+    if ! apt-get install -y docker-ce=$DOCKER_VERSION docker-ce-cli=$DOCKER_VERSION containerd.io docker-buildx-plugin docker-compose-plugin ; then
+        msg error "Docker installation failed"
+        exit 1
+    fi
 }
 
 install_lithops()
